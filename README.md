@@ -23,7 +23,9 @@ Click the mic 🎤, allow access, and start talking!
 
 
 🛠️ Built With
+
 HTML · CSS · JavaScript · Web Speech API
 
 👨‍💻 Author
+
 [Anand dharavath] · [Ai&Ds] · [CBIT] · [3rd Year]
