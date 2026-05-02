@@ -1,4 +1,4 @@
-🎤 Speech·Text
+🎤 **Speech-Text Generator**
 
 Speak — and watch your words type themselves.
 
