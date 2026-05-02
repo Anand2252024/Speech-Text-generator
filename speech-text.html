@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Speech·Text — Talk & Watch It Type</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+ 
+<style>
+  :root {
+    --bg: #070710;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --neon-pink: #ff2d78;
+    --neon-blue: #00d4ff;
+    --neon-lime: #b8ff57;
+    --neon-purple: #a855f7;
+    --text: #f0eeff;
+    --muted: rgba(240,238,255,0.45);
+    --glow-pink: 0 0 30px rgba(255,45,120,0.5), 0 0 80px rgba(255,45,120,0.2);
+    --glow-blue: 0 0 30px rgba(0,212,255,0.5), 0 0 80px rgba(0,212,255,0.2);
+  }
+ 
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+ 
+  /* ── Aurora background ── */
+  .aurora {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    overflow: hidden;
+  }
+  .aurora::before, .aurora::after, .aurora .blob3 {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.18;
+    animation: drift 14s ease-in-out infinite alternate;
+  }
+  .aurora::before {
+    width: 700px; height: 500px;
+    background: radial-gradient(circle, var(--neon-pink), transparent 70%);
+    top: -150px; left: -100px;
+    animation-duration: 16s;
+  }
+  .aurora::after {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, var(--neon-blue), transparent 70%);
+    bottom: -200px; right: -100px;
+    animation-duration: 20s; animation-delay: -6s;
+  }
+  .aurora .blob3 {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, var(--neon-purple), transparent 70%);
+    top: 40%; left: 50%; transform: translate(-50%,-50%);
+    animation-duration: 18s; animation-delay: -3s;
+    opacity: 0.12;
+  }
+  @keyframes drift {
+    0%   { transform: translate(0,0) scale(1); }
+    100% { transform: translate(60px, 40px) scale(1.1); }
+  }
+ 
+  /* Noise grain overlay */
+  body::after {
+    content: '';
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.03;
+  }
+ 
+  /* ── Layout ── */
+  .container {
+    position: relative; z-index: 2;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+ 
+  /* ── Header ── */
+  header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(184,255,87,0.08);
+    border: 1px solid rgba(184,255,87,0.25);
+    color: var(--neon-lime);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 5px 14px; border-radius: 100px;
+    margin-bottom: 20px;
+  }
+  .badge-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--neon-lime);
+    box-shadow: 0 0 8px var(--neon-lime);
+    animation: blink 1.6s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+ 
+  h1 {
+    font-size: clamp(42px, 9vw, 82px);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+  }
+  h1 .word1 { color: var(--text); }
+  h1 .dot   {
+    color: var(--neon-pink);
+    text-shadow: var(--glow-pink);
+  }
+  h1 .word2 {
+    background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+ 
+  .subtitle {
+    color: var(--muted);
+    font-size: 15px; font-weight: 400;
+    letter-spacing: 0.01em;
+    max-width: 360px; margin: 0 auto;
+  }
+ 
+  /* ── Glass card ── */
+  .card {
+    background: var(--surface);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  }
+ 
+  /* ── Mic Section ── */
+  .mic-section {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 28px; margin-bottom: 36px;
+  }
+ 
+  /* Waveform visualizer */
+  .wave-ring {
+    position: relative; width: 140px; height: 140px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .wave-ring .ring {
+    position: absolute; border-radius: 50%; border: 1.5px solid;
+    animation: none;
+  }
+  .wave-ring .ring:nth-child(1) { inset: 0; border-color: rgba(255,45,120,0.4); }
+  .wave-ring .ring:nth-child(2) { inset: 10px; border-color: rgba(255,45,120,0.2); }
+  .wave-ring .ring:nth-child(3) { inset: 20px; border-color: rgba(255,45,120,0.1); }
+ 
+  .recording .wave-ring .ring:nth-child(1) { animation: pulse-ring 1.2s ease-out infinite; }
+  .recording .wave-ring .ring:nth-child(2) { animation: pulse-ring 1.2s ease-out infinite 0.3s; }
+  .recording .wave-ring .ring:nth-child(3) { animation: pulse-ring 1.2s ease-out infinite 0.6s; }
+ 
+  @keyframes pulse-ring {
+    0%   { transform: scale(0.95); opacity: 0.8; }
+    70%  { transform: scale(1.25); opacity: 0; }
+    100% { transform: scale(1.25); opacity: 0; }
+  }
+ 
+  /* Mic button */
+  #micBtn {
+    position: relative; z-index: 1;
+    width: 90px; height: 90px; border-radius: 50%;
+    border: none; cursor: pointer;
+    background: linear-gradient(135deg, #ff2d78, #a855f7);
+    box-shadow: var(--glow-pink), inset 0 1px 0 rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    outline: none;
+  }
+  #micBtn:hover { transform: scale(1.06); }
+  #micBtn:active { transform: scale(0.96); }
+  #micBtn svg { width: 36px; height: 36px; fill: #fff; pointer-events: none; }
+ 
+  .recording #micBtn {
+    background: linear-gradient(135deg, #ff2d78, #ff6b35);
+    box-shadow: 0 0 40px rgba(255,45,120,0.8), 0 0 100px rgba(255,45,120,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+    animation: mic-throb 0.8s ease-in-out infinite alternate;
+  }
+  @keyframes mic-throb {
+    from { transform: scale(1); }
+    to   { transform: scale(1.05); }
+  }
+ 
+  /* Status pill */
+  #statusPill {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    padding: 6px 16px; border-radius: 100px;
+    transition: all 0.3s ease;
+  }
+  .recording #statusPill {
+    color: var(--neon-pink);
+    background: rgba(255,45,120,0.1);
+    border-color: rgba(255,45,120,0.3);
+    box-shadow: 0 0 20px rgba(255,45,120,0.2);
+  }
+ 
+  /* ── Bars waveform ── */
+  .bars {
+    display: flex; align-items: center; gap: 4px;
+    height: 40px; visibility: hidden;
+  }
+  .recording .bars { visibility: visible; }
+  .bar {
+    width: 4px; border-radius: 2px;
+    background: linear-gradient(to top, var(--neon-blue), var(--neon-purple));
+    height: 6px;
+    animation: none;
+  }
+  .recording .bar {
+    animation: bar-dance var(--dur, 0.6s) ease-in-out infinite alternate;
+  }
+  .bar:nth-child(1)  { --dur:.5s; }  .bar:nth-child(2)  { --dur:.7s; }
+  .bar:nth-child(3)  { --dur:.4s; }  .bar:nth-child(4)  { --dur:.9s; }
+  .bar:nth-child(5)  { --dur:.6s; }  .bar:nth-child(6)  { --dur:.45s; }
+  .bar:nth-child(7)  { --dur:.8s; }  .bar:nth-child(8)  { --dur:.55s; }
+  .bar:nth-child(9)  { --dur:.65s; } .bar:nth-child(10) { --dur:.75s; }
+  .bar:nth-child(11) { --dur:.5s; }  .bar:nth-child(12) { --dur:.85s; }
+  .bar:nth-child(13) { --dur:.4s; }  .bar:nth-child(14) { --dur:.6s; }
+  .bar:nth-child(15) { --dur:.7s; }
+  @keyframes bar-dance {
+    from { height: 4px; }
+    to   { height: calc(4px + var(--h, 32px)); }
+  }
+  .bar:nth-child(1)  { --h:18px; } .bar:nth-child(2)  { --h:30px; }
+  .bar:nth-child(3)  { --h:14px; } .bar:nth-child(4)  { --h:36px; }
+  .bar:nth-child(5)  { --h:28px; } .bar:nth-child(6)  { --h:20px; }
+  .bar:nth-child(7)  { --h:34px; } .bar:nth-child(8)  { --h:16px; }
+  .bar:nth-child(9)  { --h:26px; } .bar:nth-child(10) { --h:32px; }
+  .bar:nth-child(11) { --h:22px; } .bar:nth-child(12) { --h:12px; }
+  .bar:nth-child(13) { --h:30px; } .bar:nth-child(14) { --h:24px; }
+  .bar:nth-child(15) { --h:20px; }
+ 
+  /* ── Text Output ── */
+  .output-label {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .output-label span {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .output-label .tag {
+    color: var(--neon-blue);
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    padding: 3px 10px; border-radius: 100px; font-size: 10px;
+  }
+ 
+  #outputBox {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    min-height: 180px;
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--text);
+    word-break: break-word;
+    white-space: pre-wrap;
+    position: relative;
+    overflow-y: auto;
+    max-height: 320px;
+    transition: border-color 0.3s;
+  }
+  #outputBox:focus-within,
+  .recording #outputBox {
+    border-color: rgba(255,45,120,0.3);
+    box-shadow: inset 0 0 40px rgba(255,45,120,0.03);
+  }
+ 
+  /* Interim (live) text */
+  #interimSpan {
+    color: rgba(240,238,255,0.35);
+    font-style: italic;
+  }
+ 
+  /* Cursor blink */
+  .cursor {
+    display: inline-block; width: 2px; height: 1.1em;
+    background: var(--neon-pink);
+    box-shadow: 0 0 8px var(--neon-pink);
+    border-radius: 1px; vertical-align: text-bottom;
+    margin-left: 2px;
+    animation: cursor-blink 1s step-end infinite;
+  }
+  @keyframes cursor-blink { 0%,100%{opacity:1} 50%{opacity:0} }
+ 
+  .placeholder-text {
+    color: var(--muted); font-style: italic; font-size: 14px;
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    text-align: center; pointer-events: none; white-space: nowrap;
+  }
+ 
+  /* ── Actions ── */
+  .actions {
+    display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap;
+  }
+  .btn {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px 20px; border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s ease;
+    letter-spacing: 0.02em;
+    min-width: 120px;
+  }
+  .btn:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.15);
+    transform: translateY(-1px);
+  }
+  .btn:active { transform: translateY(0); }
+  .btn-copy:hover { color: var(--neon-lime); border-color: rgba(184,255,87,0.3); }
+  .btn-clear:hover { color: var(--neon-pink); border-color: rgba(255,45,120,0.3); }
+  .btn-download:hover { color: var(--neon-blue); border-color: rgba(0,212,255,0.3); }
+ 
+  .btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none;
+             stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+ 
+  /* ── Word count strip ── */
+  .stats-strip {
+    display: flex; gap: 24px;
+    margin-top: 20px; padding: 16px 20px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border); border-radius: 12px;
+  }
+  .stat { display: flex; flex-direction: column; gap: 2px; }
+  .stat-val {
+    font-size: 22px; font-weight: 800; line-height: 1;
+    background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .stat-lbl {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+  }
+ 
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: rgba(184,255,87,0.1); border: 1px solid rgba(184,255,87,0.3);
+    color: var(--neon-lime); font-family: 'DM Mono', monospace;
+    font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 10px 22px; border-radius: 100px;
+    opacity: 0; pointer-events: none; z-index: 999;
+    transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+ 
+  /* ── Footer ── */
+  footer {
+    text-align: center; margin-top: 48px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: rgba(240,238,255,0.2);
+    letter-spacing: 0.08em;
+  }
+  footer a { color: rgba(255,45,120,0.5); text-decoration: none; }
+ 
+  /* ── No support banner ── */
+  #noSupport {
+    display: none;
+    margin: 20px 0;
+    padding: 16px 20px;
+    background: rgba(255,107,53,0.08);
+    border: 1px solid rgba(255,107,53,0.3);
+    border-radius: 12px;
+    color: #ff9f7a;
+    font-size: 13px; line-height: 1.6;
+  }
+ 
+  /* ── Responsive ── */
+  @media (max-width: 560px) {
+    h1 { font-size: 52px; }
+    .card { padding: 22px 18px; }
+    .actions { flex-direction: column; }
+    .btn { min-width: auto; }
+    .stats-strip { gap: 16px; flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+ 
+<div class="aurora"><div class="blob3"></div></div>
+ 
+<div class="container">
+  <!-- Header -->
+  <header>
+    <div class="badge"><span class="badge-dot"></span>My Project</div>
+    <h1>
+      <span class="word1">speech</span><span class="dot">·</span><span class="word2">text</span>
+    </h1>
+    <p class="subtitle">Talk, and watch your words appear — no hands needed.</p>
+  </header>
+ 
+  <!-- Main Card -->
+  <div class="card" id="mainCard">
+ 
+    <!-- Mic Section -->
+    <div class="mic-section">
+      <!-- Waveform rings -->
+      <div class="wave-ring">
+        <div class="ring"></div>
+        <div class="ring"></div>
+        <div class="ring"></div>
+        <button id="micBtn" title="Click to start / stop recording" aria-label="Toggle recording">
+          <!-- Mic icon -->
+          <svg id="micIcon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <rect x="9" y="2" width="6" height="11" rx="3"/>
+            <path d="M5 10a7 7 0 0 0 14 0" stroke="#fff" stroke-width="1.5"
+                  stroke-linecap="round" fill="none"/>
+            <line x1="12" y1="20" x2="12" y2="22" stroke="#fff" stroke-width="1.5"
+                  stroke-linecap="round"/>
+            <line x1="8" y1="22" x2="16" y2="22" stroke="#fff" stroke-width="1.5"
+                  stroke-linecap="round"/>
+          </svg>
+          <!-- Stop icon (hidden by default) -->
+          <svg id="stopIcon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:none">
+            <rect x="5" y="5" width="14" height="14" rx="2"/>
+          </svg>
+        </button>
+      </div>
+ 
+      <!-- Bars -->
+      <div class="bars" id="bars">
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      </div>
+ 
+      <div id="statusPill">tap mic to start</div>
+    </div>
+ 
+    <!-- No support notice -->
+    <div id="noSupport">
+      ⚠️ Your browser doesn't support the Web Speech API. Please use <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong> for this feature.
+    </div>
+ 
+    <!-- Output area -->
+    <div class="output-label">
+      <span>Transcript</span>
+      <span class="tag" id="langTag">en-US</span>
+    </div>
+ 
+    <div id="outputBox">
+      <span id="finalText"></span><span id="interimSpan"></span><span class="cursor" id="cursor"></span>
+      <div class="placeholder-text" id="placeholder">Your spoken words will appear here…</div>
+    </div>
+ 
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn btn-copy" onclick="copyText()">
+        <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy
+      </button>
+      <button class="btn btn-download" onclick="downloadText()">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Save .txt
+      </button>
+      <button class="btn btn-clear" onclick="clearText()">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        Clear
+      </button>
+    </div>
+ 
+    <!-- Stats -->
+    <div class="stats-strip">
+      <div class="stat">
+        <span class="stat-val" id="wordCount">0</span>
+        <span class="stat-lbl">words</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val" id="charCount">0</span>
+        <span class="stat-lbl">chars</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val" id="sentenceCount">0</span>
+        <span class="stat-lbl">sentences</span>
+      </div>
+    </div>
+ 
+  </div><!-- /card -->
+ 
+  <footer>
+    Built with Web Speech API &nbsp;·&nbsp; Speech·Text &copy; 2025 &nbsp;·&nbsp;
+    <a href="#">Final Year Project</a>
+  </footer>
+</div>
+ 
+<!-- Permission Modal -->
+<div id="permModal" style="
+  display:none; position:fixed; inset:0; z-index:100;
+  background:rgba(7,7,16,0.85); backdrop-filter:blur(12px);
+  align-items:center; justify-content:center; padding:24px;">
+  <div style="
+    background:#0e0e1e; border:1px solid rgba(255,45,120,0.3);
+    border-radius:20px; padding:32px; max-width:480px; width:100%;
+    box-shadow:0 0 60px rgba(255,45,120,0.15);
+    font-family:'Syne',sans-serif; position:relative;">
+    <div style="
+      position:absolute;top:0;left:0;right:0;height:1px;
+      background:linear-gradient(90deg,transparent,rgba(255,45,120,0.5),transparent);
+      border-radius:20px 20px 0 0;"></div>
+    <h2 id="modalTitle" style="
+      font-size:18px;font-weight:800;color:#ff2d78;
+      text-shadow:0 0 20px rgba(255,45,120,0.4);margin-bottom:16px;"></h2>
+    <div id="modalBody" style="
+      font-family:'DM Mono',monospace;font-size:12.5px;line-height:1.85;
+      color:rgba(240,238,255,0.75);"></div>
+    <div style="margin-top:8px;padding:12px;background:rgba(255,255,255,0.03);
+      border:1px solid rgba(255,255,255,0.06);border-radius:10px;margin-top:20px;
+      font-family:'DM Mono',monospace;font-size:11px;color:rgba(240,238,255,0.4);">
+      💡 <strong style="color:rgba(240,238,255,0.6)">Quickest fix:</strong>
+      Open this file with VS Code → Right-click → <em>Open with Live Server</em>
+    </div>
+    <button onclick="closePermModal()" style="
+      margin-top:20px;width:100%;padding:12px;
+      background:linear-gradient(135deg,#ff2d78,#a855f7);
+      border:none;border-radius:10px;color:#fff;
+      font-family:'Syne',sans-serif;font-size:14px;font-weight:700;
+      cursor:pointer;transition:opacity .2s;"
+      onmouseover="this.style.opacity='.85'"
+      onmouseout="this.style.opacity='1'">
+      Got it ✓
+    </button>
+  </div>
+</div>
+ 
+<div id="toast">✓ Copied to clipboard</div>
+ 
+<script>
+  // ── State ──────────────────────────────────────────────────────
+  let recognition = null;
+  let isRecording  = false;
+  let finalTranscript = '';
+ 
+  const mainCard    = document.getElementById('mainCard');
+  const micBtn      = document.getElementById('micBtn');
+  const micIcon     = document.getElementById('micIcon');
+  const stopIcon    = document.getElementById('stopIcon');
+  const statusPill  = document.getElementById('statusPill');
+  const finalText   = document.getElementById('finalText');
+  const interimSpan = document.getElementById('interimSpan');
+  const placeholder = document.getElementById('placeholder');
+  const noSupport   = document.getElementById('noSupport');
+  const cursor      = document.getElementById('cursor');
+ 
+  // ── Setup Web Speech ──────────────────────────────────────────
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+ 
+  if (!SpeechRecognition) {
+    noSupport.style.display = 'block';
+    micBtn.disabled = true;
+    micBtn.style.opacity = '0.4';
+    micBtn.style.cursor  = 'not-allowed';
+  } else {
+    recognition = new SpeechRecognition();
+    recognition.continuous      = true;
+    recognition.interimResults  = true;
+    recognition.lang            = 'en-US';
+    recognition.maxAlternatives = 1;
+ 
+    recognition.onstart = () => {
+      isRecording = true;
+      mainCard.classList.add('recording');
+      statusPill.textContent = '● recording…';
+      micIcon.style.display  = 'none';
+      stopIcon.style.display = '';
+    };
+ 
+    recognition.onend = () => {
+      if (isRecording) recognition.start(); // keep alive
+    };
+ 
+    recognition.onerror = (e) => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        // Already handled by getUserMedia catch — just stop silently
+      }
+      stopRecording();
+    };
+ 
+    recognition.onresult = (e) => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) {
+          finalTranscript += t + ' ';
+        } else {
+          interim = t;
+        }
+      }
+      finalText.textContent   = finalTranscript;
+      interimSpan.textContent = interim;
+      placeholder.style.display = finalTranscript || interim ? 'none' : '';
+      updateStats();
+    };
+  }
+ 
+  // ── Toggle ────────────────────────────────────────────────────
+  micBtn.addEventListener('click', () => {
+    isRecording ? stopRecording() : requestMicAndStart();
+  });
+ 
+  async function requestMicAndStart() {
+    if (!recognition) return;
+ 
+    // Step 1: explicitly ask for mic permission first
+    try {
+      statusPill.textContent = '⏳ requesting mic…';
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Permission granted — stop the stream (recognition handles its own)
+      stream.getTracks().forEach(t => t.stop());
+      startRecording();
+    } catch (err) {
+      statusPill.textContent = 'tap mic to start';
+      let title = '🎤 Microphone Access Denied';
+      let msg   = '';
+ 
+      if (location.protocol === 'file:') {
+        title = '🚫 Local File Restriction';
+        msg = `
+          <strong>Chrome blocks mic on local files.</strong><br><br>
+          <b>Fix Option 1 — Chrome flag (easiest):</b><br>
+          1. Open a new tab → paste this URL:<br>
+          <code>chrome://flags/#unsafely-treat-insecure-origin-as-secure</code><br>
+          2. Add <code>file://</code> → Enable → Relaunch Chrome<br><br>
+          <b>Fix Option 2 — Run a local server:</b><br>
+          Open Terminal/CMD in this file's folder and run:<br>
+          <code>npx serve .</code> &nbsp; then open <code>http://localhost:3000</code><br><br>
+          <b>Fix Option 3 — Use Live Server in VS Code</b><br>
+          Right-click the file → <em>Open with Live Server</em>
+        `;
+      } else if (err.name === 'NotAllowedError') {
+        msg = `
+          You blocked mic access. To fix:<br><br>
+          1. Click the 🔒 lock icon in your browser's address bar<br>
+          2. Set <strong>Microphone → Allow</strong><br>
+          3. Refresh the page and try again
+        `;
+      } else {
+        msg = `Error: <strong>${err.name}</strong> — ${err.message}<br><br>
+               Make sure your microphone is connected and not used by another app.`;
+      }
+      showPermissionModal(title, msg);
+    }
+  }
+ 
+  function startRecording() {
+    if (!recognition) return;
+    finalTranscript = '';
+    finalText.textContent   = '';
+    interimSpan.textContent = '';
+    placeholder.style.display = '';
+    recognition.start();
+  }
+ 
+  function stopRecording() {
+    isRecording = false;
+    mainCard.classList.remove('recording');
+    statusPill.textContent = 'tap mic to start';
+    micIcon.style.display  = '';
+    stopIcon.style.display = 'none';
+    if (recognition) recognition.stop();
+    interimSpan.textContent = '';
+    updateStats();
+  }
+ 
+  // ── Helpers ───────────────────────────────────────────────────
+  function updateStats() {
+    const txt   = finalTranscript.trim();
+    const words = txt ? txt.split(/\s+/).length : 0;
+    const chars = txt.length;
+    const sents = txt ? (txt.match(/[.!?]+/g) || []).length : 0;
+    document.getElementById('wordCount').textContent     = words;
+    document.getElementById('charCount').textContent     = chars;
+    document.getElementById('sentenceCount').textContent = sents;
+  }
+ 
+  function copyText() {
+    const txt = finalTranscript.trim();
+    if (!txt) { showToast('Nothing to copy yet!', '#ff9f7a', 'rgba(255,107,53,0.3)'); return; }
+    navigator.clipboard.writeText(txt)
+      .then(() => showToast('✓ Copied to clipboard', 'var(--neon-lime)', 'rgba(184,255,87,0.3)'))
+      .catch(() => showToast('Copy failed', '#ff9f7a', 'rgba(255,107,53,0.3)'));
+  }
+ 
+  function clearText() {
+    finalTranscript = '';
+    finalText.textContent   = '';
+    interimSpan.textContent = '';
+    placeholder.style.display = '';
+    updateStats();
+    showToast('🗑 Cleared', 'var(--neon-pink)', 'rgba(255,45,120,0.3)');
+  }
+ 
+  function downloadText() {
+    const txt = finalTranscript.trim();
+    if (!txt) { showToast('Nothing to save yet!', '#ff9f7a', 'rgba(255,107,53,0.3)'); return; }
+    const blob = new Blob([txt], { type: 'text/plain' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = 'speech-text-transcript.txt';
+    a.click();
+    showToast('⬇ Saved as .txt', 'var(--neon-blue)', 'rgba(0,212,255,0.3)');
+  }
+ 
+  // ── Permission Modal ─────────────────────────────────────────
+  const permModal = document.getElementById('permModal');
+  function showPermissionModal(title, bodyHTML) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalBody').innerHTML   = bodyHTML;
+    permModal.style.display = 'flex';
+  }
+  function closePermModal() {
+    permModal.style.display = 'none';
+    statusPill.textContent  = 'tap mic to start';
+  }
+ 
+  // ── Toast ─────────────────────────────────────────────────────
+  let toastTimer;
+  const toastEl = document.getElementById('toast');
+  function showToast(msg, color = 'var(--neon-lime)', border = 'rgba(184,255,87,0.3)') {
+    toastEl.textContent    = msg;
+    toastEl.style.color    = color;
+    toastEl.style.borderColor = border;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+  }
+</script>
+</body>
+</html>

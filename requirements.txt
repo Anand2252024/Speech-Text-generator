@@ -1,0 +1,29 @@
+# ============================================
+#   Speech·Text — Project Requirements
+# ============================================
+
+# --- BROWSER ---
+# Google Chrome (v90+) or Microsoft Edge (v90+)
+# Web Speech API is supported only in Chromium-based browsers.
+
+# --- CODE EDITOR ---
+# Visual Studio Code
+# Download: https://code.visualstudio.com
+
+# --- RUNTIME ---
+# Python 3.x.x
+# Download: https://www.python.org/downloads
+# Used to run: python -m http.server 8080
+
+# --- PROJECT FILES ---
+# speech-text.html    → Main application
+# README.md         → Project documentation
+# requirements.txt → This file
+
+# --- INTERNET CONNECTION ---
+# Required to load Google Fonts (Syne + DM Mono)
+# App works offline after fonts are cached on first load.
+
+# --- NO EXTERNAL PACKAGES NEEDED ---
+# Built using core web technologies only.
+# HTML · CSS · JavaScript · Web Speech API
