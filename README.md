@@ -2,7 +2,7 @@
 
 Speak — and watch your words type themselves.
 
-A real-time Speech-to-Text web app built as a Project. No typing needed, just talk!
+A real-time Speech-to-Text web app built as a Project. No typing needed, just talk and see the magic!
 
 ✨ What it does
 
